@@ -45,7 +45,7 @@
   }
 }(this, (function () {
   var exports = function (appKey, appSecret, permissions, format, md5) {
-    var https, crypt;
+    var https, crypt, ajax;
 
     this.authUrl = 'https://www.rememberthemilk.com/services/auth/';
     this.baseUrl = 'https://api.rememberthemilk.com/services/rest/';
@@ -60,6 +60,9 @@
       https = require('https');
       crypto = require('crypto');
     }
+    if(this.isPebble) {
+      ajax = require('ajax');
+    }
 
     this.md5 = (!this.isNode)
       ? md5
@@ -73,7 +76,7 @@
       format = (format) ? format : 'json';
 
     if (!appKey || !appSecret) {
-      throw 'Error: App Key and Secret Key must be defined.';
+      throw {message: 'Error: App Key and Secret Key must be defined.'};
     }
 
     this.appKey = appKey;
@@ -195,12 +198,12 @@
       }
 
       if (!method) {
-        throw 'Error: API Method must be defined.';
+        throw {message: 'Error: API Method must be defined.'};
       }
 
       params.method = method;
 
-      if (!this.isWinJS && !this.isNode && !this.isFirefoxOS) {
+      if (!this.isWinJS && !this.isNode && !this.isFirefoxOS && !this.isPebble) {
         callbackName = 'RememberTheMilk' + new Date().getTime();
         params.callback = callbackName;
       }
@@ -247,6 +250,23 @@
         xhr.send();
       } else if (this.isPebble) {
         console.log('In pebble environment!');
+        console.log(requestUrl);
+        ajax({ url: requestUrl },
+        function(data) {
+          console.log(JSON.stringify(data));
+
+          console.log('Received data.');
+          data = JSON.parse(data);
+          callback.call(this, data);
+
+        },  // End of success callback
+
+        function(error) {
+          console.log('Error receiving list data.');
+          console.log(JSON.stringify(error));
+        }   // End of error callback
+      );
+        
 
       } else {
         window[callbackName] = function (resp) {

@@ -8,6 +8,7 @@ var UI = require('ui');
 var Vibe = require('ui/vibe');
 var ajax = require('ajax');
 var Vector2 = require('vector2');
+var md5 = require("./md5.js");
 var RememberTheMilk = require('./rtm.js');
 
 var main = new UI.Card({
@@ -16,11 +17,28 @@ var main = new UI.Card({
   subtitle: 'Hello World!',
   body: 'Press any button.'
 });
-var api_key = '123';
-var api_secret = '456abc';
 console.log('starting app...');
-var rtm = new RememberTheMilk(api_key, api_secret, 'delete', 'json');
-console.log(rtm.isPebble);
+var rtm = new RememberTheMilk(api_key, api_secret, 'delete', 'json', md5);
+rtm.get('rtm.tasks.getList', {list_id: '22088288', filter: 'status:incomplete'}, function(resp){
+  //console.log(JSON.stringify(resp, null, 2));
+  var i, tasks;
+
+  tasks = resp.rsp.tasks.list[0].taskseries;
+  for (i = 0; i < resp.rsp.tasks.list[0].taskseries.length; i++) {
+    var task = resp.rsp.tasks.list[0].taskseries[i];
+    console.log(task.name + ' (id: ' + task.id + ')');
+  }
+});
+console.log('Lists:');
+rtm.get('rtm.lists.getList', function(resp){
+  var i, list;
+
+  for (i = 0; i < resp.rsp.lists.list.length; i++) {
+    list = resp.rsp.lists.list[i];
+    console.log(list.name + ' (id: ' + list.id + ')');
+  }
+
+});
 main.show();
 
 main.on('click', 'up', function(e) {
